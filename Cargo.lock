@@ -3334,7 +3334,7 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
 name = "zellij-tile"
-version = "0.41.0"
+version = "0.42.0"
 dependencies = [
  "clap",
  "serde",
@@ -3346,14 +3346,14 @@ dependencies = [
 
 [[package]]
 name = "zellij-tile-utils"
-version = "0.41.0"
+version = "0.42.0"
 dependencies = [
  "ansi_term",
 ]
 
 [[package]]
 name = "zellij-utils"
-version = "0.41.0"
+version = "0.42.0"
 dependencies = [
  "anyhow",
  "async-channel 1.9.0",
