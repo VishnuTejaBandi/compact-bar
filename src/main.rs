@@ -145,8 +145,6 @@ impl ZellijPlugin for State {
 
         let mut all_tabs: Vec<LinePart> = vec![];
         let mut active_tab_index = 0;
-        let mut active_swap_layout_name = None;
-        let mut is_swap_layout_dirty = false;
         for t in &mut self.tabs {
             let mut tabname = t.name.clone();
             if t.active && self.mode_info.mode == InputMode::RenameTab {
@@ -156,8 +154,6 @@ impl ZellijPlugin for State {
                 active_tab_index = t.position;
             } else if t.active {
                 active_tab_index = t.position;
-                is_swap_layout_dirty = t.is_swap_layout_dirty;
-                active_swap_layout_name = t.active_swap_layout_name.clone();
             }
             let tab = tab_style(tabname, t, self.mode_info.style.colors);
             all_tabs.push(tab);
@@ -169,10 +165,7 @@ impl ZellijPlugin for State {
             cols.saturating_sub(1),
             self.mode_info.style.colors,
             self.mode_info.capabilities,
-            self.mode_info.style.hide_session_name,
             self.mode_info.mode,
-            &active_swap_layout_name,
-            is_swap_layout_dirty,
         );
         let output = self
             .tab_line
