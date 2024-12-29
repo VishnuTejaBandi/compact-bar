@@ -172,7 +172,7 @@ fn tab_line_prefix(mode: InputMode, palette: Palette, _cols: usize) -> Vec<LineP
 
     let mut parts = vec![];
     let mode_part = format!("{:?}", mode).to_uppercase();
-    let mode_part_padded = format!(" {} ", mode_part);
+    let mode_part_padded = format!(" {} ", mode_part.chars().next().unwrap());
     let mode_part_len = mode_part_padded.width();
     let mode_part_styled_text = if mode == InputMode::Locked {
         style!(locked_mode_color, bg_color)
@@ -215,17 +215,9 @@ pub fn tab_line(
     let mut prefix = tab_line_prefix(mode, palette, cols);
 
     if let Some(name) = session_name {
-        let name_part = format!("{}", name);
-        let name_part_len = name_part.width();
-        let text_color = match palette.theme_hue {
-            ThemeHue::Dark => palette.cyan,
-            ThemeHue::Light => palette.black,
-        };
-        let bg_color = match palette.theme_hue {
-            ThemeHue::Dark => palette.black,
-            ThemeHue::Light => palette.white,
-        };
-        let name_part_styled_text = style!(text_color, bg_color).bold().paint(name_part);
+        let name_part = format!(" {} ", name);
+        let name_part_len = name_part.width() - 1;
+        let name_part_styled_text = style!(palette.black, palette.cyan).paint(name_part);
         prefix.push(LinePart {
             part: name_part_styled_text.to_string(),
             len: name_part_len,

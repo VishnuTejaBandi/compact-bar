@@ -36,7 +36,7 @@ struct State {
     tab_line: Vec<LinePart>,
     next_session: Option<String>,
     clients: Vec<ClientInfo>,
-    switch_session_event_source: Option<ClientId>,
+    switch_session_event_source_pid: Option<u32>,
     current_session: String,
     pid: u32,
 }
@@ -145,7 +145,7 @@ impl ZellijPlugin for State {
 
         let mut all_tabs: Vec<LinePart> = vec![];
         let mut active_tab_index = 0;
-        for t in &mut self.tabs {
+        for (index, t) in &mut self.tabs.iter().enumerate() {
             let mut tabname = t.name.clone();
             if t.active && self.mode_info.mode == InputMode::RenameTab {
                 if tabname.is_empty() {
@@ -155,7 +155,11 @@ impl ZellijPlugin for State {
             } else if t.active {
                 active_tab_index = t.position;
             }
-            let tab = tab_style(tabname, t, self.mode_info.style.colors);
+            let tab = tab_style(
+                (index + 1).to_string() + " " + tabname.as_ref(),
+                t,
+                self.mode_info.style.colors,
+            );
             all_tabs.push(tab);
         }
         self.tab_line = tab_line(
@@ -187,8 +191,11 @@ impl ZellijPlugin for State {
 
     fn pipe(&mut self, pipe_msg: PipeMessage) -> bool {
         if pipe_msg.name == "switch_session" {
-            self.switch_session_event_source = match pipe_msg.source {
-                PipeSource::Keybind { source_client_id } => Some(source_client_id),
+            self.switch_session_event_source_pid = match pipe_msg.source {
+                PipeSource::Keybind {
+                    source_client_id: _,
+                    source_pid,
+                } => Some(source_pid),
                 _ => None,
             };
             list_clients();
@@ -203,20 +210,23 @@ impl SwitchSession for State {
             return ();
         }
 
-        let current_client_info = self
+        let plugin_pid = self
             .clients
             .iter()
-            .find(|client_info| client_info.is_current_client);
-        self.pid = current_client_info.unwrap().client_pid;
+            .find(|client_info| client_info.is_current_client)
+            .map(|v| v.client_pid);
 
-        if self.switch_session_event_source.is_some()
-            && current_client_info.is_some_and(|client_info| {
-                client_info.client_id == self.switch_session_event_source.unwrap()
-            })
+        if plugin_pid.is_none() {
+            return ();
+        }
+
+        self.pid = plugin_pid.unwrap();
+        if self.switch_session_event_source_pid.is_some()
+            && self.pid == self.switch_session_event_source_pid.unwrap()
         {
-            self.dump_layout_to_cache();
-
             if self.next_session.is_some() {
+                self.dump_layout_to_cache();
+
                 let next_session = self.next_session.as_deref().unwrap();
                 match self
                     .get_session_layout_info(&next_session)
@@ -236,7 +246,7 @@ impl SwitchSession for State {
             }
         }
 
-        self.switch_session_event_source = None;
+        self.switch_session_event_source_pid = None;
     }
 
     fn dump_layout_to_cache(&self) -> () {
